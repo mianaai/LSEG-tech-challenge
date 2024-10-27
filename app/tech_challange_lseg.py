@@ -17,12 +17,16 @@ class TechChallangeLseg():
 	"""
 	"""
 
-	def __init__(self, data_path, nb_of_stocks_per_exchange=1):
+	def __init__(self,
+				data_path,
+				nb_of_stocks_per_exchange,
+				prediction_function):
 		"""
 		"""
 		self.__data_path = data_path
 		self.__stocks = {}
 		self.__nb_of_stocks_per_exchange = nb_of_stocks_per_exchange
+		self.__prediction_function = prediction_function
 
 		for stock_exch_name in os.listdir(data_path):
 			st_abs_path = os.path.join(data_path, stock_exch_name)
@@ -48,7 +52,7 @@ class TechChallangeLseg():
 			for stock_name in self.__stocks[stock_exch_name].list_stocks():
 				self.__stocks[stock_exch_name].predict_stock(
 					stock_name, 
-					StockExchange.get_prediction,
+					self.__prediction_function,
 					prediction_window)
 
 	def write_output(self):

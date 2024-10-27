@@ -7,8 +7,8 @@
 import argparse
 import os
 
-from stock_exchange import StockExchange
 from tech_challange_lseg import TechChallangeLseg
+from utils import default_prediction_function
 
 DATA_PATH = os.path.join(os.path.abspath("."), "..", "data")
 
@@ -25,7 +25,10 @@ def main():
 						default=1)
 	args = parser.parse_args()
 	
-	st = TechChallangeLseg(args.data_path, args.nb_stocks)
+	st = TechChallangeLseg(
+		args.data_path,
+		args.nb_stocks,
+		default_prediction_function)
 	st.get_all_stock_timeseries()
 	st.predict_all_stocks(prediction_window=3)
 	st.write_output()
