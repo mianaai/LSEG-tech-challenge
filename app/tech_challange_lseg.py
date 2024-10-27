@@ -15,44 +15,51 @@ from stock_exchange import StockExchange
 
 class TechChallangeLseg():
 	"""
+	Class which handles the 
 	"""
 
 	def __init__(self,
-				data_path,
-				nb_of_stocks_per_exchange,
-				prediction_function):
+				 data_path,
+				 nb_of_stocks_per_exchange):
 		"""
+
+		:param data_path: Absolute path to the root of the data directory.
+		:param nb_of_stocks_per_exchange: number of stocks to read per exchange.
 		"""
 		self.__data_path = data_path
 		self.__stocks = {}
 		self.__nb_of_stocks_per_exchange = nb_of_stocks_per_exchange
-		self.__prediction_function = prediction_function
 
 		for stock_exch_name in os.listdir(data_path):
 			st_abs_path = os.path.join(data_path, stock_exch_name)
 			if not os.path.isdir(st_abs_path):
 				continue
 
+			# Initialise a StockExchange object for each stock exchange.
 			self.__stocks[stock_exch_name] = StockExchange(st_abs_path, nb_of_stocks_per_exchange)
 
-
-	def get_all_stock_timeseries(self, ts_window_len=10):
+	def get_all_stock_timeseries(self, ts_window_len=10, start_date=None):
 		"""
-		Get a timeseries from all stocks from all stock exchanges
+		Retrieve a timeseries for all stocks from all stock exchanges
+
+		:param ts_window_len: Length of the timeseries window we want to extract, in days.
+		:param start_date: Start date of the timeseries.
 		"""
 		for stock_exch_name, stock_exch in self.__stocks.items():
 			for stock_name in self.__stocks[stock_exch_name].list_stocks():
-				self.__stocks[stock_exch_name].get_stock_timeseries(stock_name, ts_window_len)
+				self.__stocks[stock_exch_name].get_stock_timeseries(
+					stock_name, ts_window_len, start_date)
 
-	def predict_all_stocks(self, prediction_window):
+	def predict_all_stocks(self, prediction_function, prediction_window):
 		"""
 		Compute predictions for all stocks
+		:param prediction_function: Function used to predict the next values of a time series.
 		"""
 		for stock_exch_name, stock_exch in self.__stocks.items():
 			for stock_name in self.__stocks[stock_exch_name].list_stocks():
 				self.__stocks[stock_exch_name].predict_stock(
 					stock_name, 
-					self.__prediction_function,
+					prediction_function,
 					prediction_window)
 
 	def write_output(self):

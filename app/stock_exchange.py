@@ -23,6 +23,7 @@ class StockExchange():
 
 		:param data_path: String. Absolute path to the directory from the local filesystem
 			containing the stock values as csv files.
+		:param nb_of_stocks_per_exchange: number of stocks to read per exchange.
 		"""
 
 		self.__data_path = data_path
@@ -45,7 +46,7 @@ class StockExchange():
 			}
 
 			with open(stock_abspath, "rb") as stock_file:
-				# Read only the first line to get the first date.
+				# Read the first line to get the first date.
 				first_line = stock_file.readline().decode().split(',')
 				try:
 					start_date = datetime.strptime(first_line[1], "%d-%m-%Y")
@@ -73,6 +74,10 @@ class StockExchange():
 
 	def get_random_interval_for_stock(self, stock_name, ts_window_len):
 		"""
+		Get the start and end dates for a random interval of a given length for a given stock.
+
+		:param stock_name: String. Name of the stock (e.g. FLTR, GSK)
+		:param ts_window_len: Length of the timeseries window we want to extract, in days.
 		"""
 		start_date, end_date = self.__stocks[stock_name]["interval"]
 		interval_days = (end_date - start_date).days - ts_window_len
@@ -81,6 +86,7 @@ class StockExchange():
 			raise Exception(f"Not enough datapoints in stock {stock_name} to get timeseries of length {ts_window_len}")
 
 		start_date += timedelta(days=randint(0, interval_days + 1))
+		end_date = start_date + timedelta(days=ts_window_len-1)
 
 		return (start_date, end_date)
 
@@ -90,15 +96,19 @@ class StockExchange():
 		"""
 		return list(self.__stocks.keys())
 
-	def get_stock_timeseries(self, stock_name, ts_window_len=10):
+	def get_stock_timeseries(self, stock_name, ts_window_len=10, start_date=None):
 		"""
 		Returns the consecutive values of a stock given the start date and length in days.
 
 		:param stock_name: String. Name of the stock (e.g. FLTR, GSK)
 		:param ts_window_len: Int. Length of the timeseries to return
 		"""
-		start_date, end_date = self.get_random_interval_for_stock(stock_name, ts_window_len)
-		end_date = start_date + timedelta(days=ts_window_len-1)
+
+		# Get a random interval if a start date was not provided.
+		if not start_date:
+			start_date, end_date = self.get_random_interval_for_stock(stock_name, ts_window_len)
+		else:
+			end_date = start_date + timedelta(days=ts_window_len-1)
 
 		stock_file_path = os.path.join(self.__data_path, f"{stock_name}.csv")
 
@@ -123,6 +133,9 @@ class StockExchange():
 				if date >= start_date:
 					timeseries.append(value)
 
+			if len(timeseries) < ts_window_len:
+				raise Exception(f"Invalid start date {start_date} given for stock {stock_name}")
+
 			self.__stocks[stock_name] = {
 				"timeseries": timeseries,
 				"interval": (start_date, end_date)
@@ -130,6 +143,11 @@ class StockExchange():
 
 	def predict_stock(self, stock_name, stock_prediction_function, prediction_window=3):
 		"""
+		Predict the next values of a given stock using a given prediction function.
+		
+		:param stock_name: String. Name of the stock (e.g. FLTR, GSK)
+		:param stock_prediction_function: function used to predict the next values of a stock.
+		:param prediction_window: Number of values to predict.
 		"""
 		prediction = stock_prediction_function(
 			self.__stocks[stock_name]["timeseries"],

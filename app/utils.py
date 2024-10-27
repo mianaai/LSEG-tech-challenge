@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-
+Utils for the LSEG tech challenge.
 """
 
 from copy import copy
@@ -9,6 +9,7 @@ from copy import copy
 def default_prediction_function(timeseries, prediction_window=3):
 	"""
 	Predict the next three values of a time series.
+	Default prediction function as described in the challenge document.
 
 	:param timeseries: List of values
 	"""
