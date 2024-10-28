@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 
 """
-
+StockExchange class implementation.
 """
 
-from datetime import datetime, timedelta
 import json
 import os
 import csv
+
+from datetime import datetime, timedelta
 from random import randint
+from typing import Callable
 
 
 class StockExchange():
@@ -16,7 +18,7 @@ class StockExchange():
 	Class which handles a single stock exchange.
 	"""
 
-	def __init__(self, data_path, nb_of_stocks_per_exchange):
+	def __init__(self, data_path: str, nb_of_stocks_per_exchange: int):
 		"""
 		Reads all the stocks from a single stock exchange.
 		We assume that the values in each csv files are in consecutive days.
@@ -30,11 +32,13 @@ class StockExchange():
 		self.__stocks = {}
 
 		for stock_fn in os.listdir(data_path):
+			# Only read the first nb_of_stocks_per_exchange files from this stock exchange
 			if nb_of_stocks_per_exchange <= 0:
 				break
 			nb_of_stocks_per_exchange -= 1
 
 			stock_abspath = os.path.join(data_path, stock_fn)
+
 			if not os.path.isfile(stock_abspath):
 				continue
 
@@ -45,6 +49,8 @@ class StockExchange():
 				"interval" : None
 			}
 
+			# First, only read the first and last line to get the start_date and end_date.
+			# I assume that the datapoints in each stock files are consecutive days.
 			with open(stock_abspath, "rb") as stock_file:
 				# Read the first line to get the first date.
 				first_line = stock_file.readline().decode().split(',')
@@ -72,7 +78,7 @@ class StockExchange():
 				# Assuming that the values in the files are consecutive days
 				self.__stocks[stock_name]["interval"] = (start_date, end_date)
 
-	def get_random_interval_for_stock(self, stock_name, ts_window_len):
+	def get_random_interval_for_stock(self, stock_name: str, ts_window_len: int) -> tuple:
 		"""
 		Get the start and end dates for a random interval of a given length for a given stock.
 
@@ -90,15 +96,16 @@ class StockExchange():
 
 		return (start_date, end_date)
 
-	def list_stocks(self):
+	def list_stocks(self) -> list:
 		"""
 		:return List: List containing all the stock names from this exchange.
 		"""
 		return list(self.__stocks.keys())
 
-	def get_stock_timeseries(self, stock_name, ts_window_len=10, start_date=None):
+	def get_stock_timeseries(self, stock_name: str, ts_window_len: int=10, start_date: datetime=None):
 		"""
 		Returns the consecutive values of a stock given the start date and length in days.
+		If a start date is not provided, choose a random one.
 
 		:param stock_name: String. Name of the stock (e.g. FLTR, GSK)
 		:param ts_window_len: Int. Length of the timeseries to return
@@ -112,9 +119,18 @@ class StockExchange():
 
 		stock_file_path = os.path.join(self.__data_path, f"{stock_name}.csv")
 
+		# Check if the file exists
 		if not os.path.exists(stock_file_path):
 			raise Exception(f"Stock file {stock_file_path} does not exist.")
 
+		# Read the stock file line by line, save only the interval [start_date, end_date)
+		# Possible improvement: to avoid reading the entire file into memory, we could
+		# only read the desired interval. To do this we would need to find the location of the
+		# line corresponding with start_date. 
+		# If the lines all had the same length (nb of chars), this would be easy: compute the offset
+		# from the number of days and the length of the lines.
+		# Since the lines can vary in length, another solution would be to do a binary search of the start_date.
+		# Did not implement this due to a lack of time.
 		with open(stock_file_path, "r", encoding="utf-8") as stock_file:
 			lines = csv.reader(stock_file)
 			timeseries = []
@@ -125,7 +141,7 @@ class StockExchange():
 					date = datetime.strptime(line[1], "%d-%m-%Y")
 					value = float(line[2])
 				except (ValueError, IndexError):
-					raise Exception(f"Unexpected input in stock {stock_name}")
+					raise Exception(f"Unexpected input in stock {stock_name}, line: {line}")
 
 				if date > end_date:
 					break
@@ -141,7 +157,10 @@ class StockExchange():
 				"interval": (start_date, end_date)
 			}
 
-	def predict_stock(self, stock_name, stock_prediction_function, prediction_window=3):
+	def predict_stock(self,
+		stock_name: str,
+		stock_prediction_function: Callable[[list, int], list],
+		prediction_window: int=3):
 		"""
 		Predict the next values of a given stock using a given prediction function.
 		
@@ -158,7 +177,7 @@ class StockExchange():
 		end_date += timedelta(days=prediction_window)
 		self.__stocks[stock_name]["interval"] = (start_date, end_date)
 
-	def get_stock(self, stock_name):
+	def get_stock(self, stock_name: str) -> dict:
 		"""
 		:return dict:
 		{

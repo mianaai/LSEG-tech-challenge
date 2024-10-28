@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 
 """
-
+TechChallangeLseg class implementation.
 """
 
 from copy import deepcopy
-from datetime import timedelta
+from datetime import timedelta, datetime
+from typing import Callable
 
 import os
 import sys
@@ -19,9 +20,10 @@ class TechChallangeLseg():
 	"""
 
 	def __init__(self,
-				 data_path,
-				 nb_of_stocks_per_exchange):
+				 data_path: str,
+				 nb_of_stocks_per_exchange: int):
 		"""
+		Initialise a StockExchange object for each dir in the data dir.
 
 		:param data_path: Absolute path to the root of the data directory.
 		:param nb_of_stocks_per_exchange: number of stocks to read per exchange.
@@ -38,7 +40,7 @@ class TechChallangeLseg():
 			# Initialise a StockExchange object for each stock exchange.
 			self.__stocks[stock_exch_name] = StockExchange(st_abs_path, nb_of_stocks_per_exchange)
 
-	def get_all_stock_timeseries(self, ts_window_len=10, start_date=None):
+	def get_all_stock_timeseries(self, ts_window_len: int=10, start_date: datetime=None):
 		"""
 		Retrieve a timeseries for all stocks from all stock exchanges
 
@@ -50,7 +52,7 @@ class TechChallangeLseg():
 				self.__stocks[stock_exch_name].get_stock_timeseries(
 					stock_name, ts_window_len, start_date)
 
-	def predict_all_stocks(self, prediction_function, prediction_window):
+	def predict_all_stocks(self, prediction_function: Callable[[list, int], list], prediction_window: int):
 		"""
 		Compute predictions for all stocks
 		:param prediction_function: Function used to predict the next values of a time series.
@@ -67,7 +69,6 @@ class TechChallangeLseg():
 		Writes the stocks and their predictions for all timeseries.
 		The output dir structure mirrors that of the input dir.
 		"""
-
 		output_dir = os.path.join(self.__data_path, "..", "output")
 
 		if not os.path.exists(output_dir):

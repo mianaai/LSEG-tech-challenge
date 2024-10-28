@@ -31,7 +31,9 @@ def main():
 	parser.add_argument("--ts-window-len", dest="ts_window_len", type=int,
 						help="Size of the timeseries window, in days.",
 						default=10)
+
 	args = parser.parse_args()
+
 	start_date = None
 	if args.start_date:
 		start_date = datetime.strptime(args.start_date, "%d-%m-%Y")
