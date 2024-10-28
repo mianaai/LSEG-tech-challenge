@@ -1,7 +1,9 @@
 Pre-interview challenge for LSEG
 
 Run instructions:
-$ python3 <repo-root>/app/main.py --nb-stocks <nb-of-stock-files-to-read-per-exchange> [--data-path <path-to-data-dir> --start-date <%d-%m-%Y> --ts-window-len int]
+$ python3 <repo-root>/app/main.py [--nb-stocks <nb-of-stock-files-to-read-per-exchange> --data-path <path-to-data-dir> --start-date <%d-%m-%Y> --ts-window-len int]
+
+Requirements: python3
 
 
 Implementation details
